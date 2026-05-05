@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  isAnonymous   Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  assessments   Assessment[]
+  memoryItems   MemoryItem[]
+  reviewPlans   ReviewPlan[]
+}
+
+model Session {
+  id          String          @id @default(uuid())
+  userId      String
+  title       String
+  status      String          @default("active")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id])
+  topic       Topic?          @relation(fields: [topicId], references: [id])
+  topicId     String?
+  messages    Message[]
+  assessments Assessment[]
+  debateThreads DebateThread[]
+}
+
+model Topic {
+  id               String   @id @default(uuid())
+  name             String
+  domain           String   @default("general")
+  difficulty       Int      @default(1)
+  prerequisites    String   @default("[]")
+  misconceptions   String   @default("[]")
+  learningObjectives String @default("[]")
+  createdAt        DateTime @default(now())
+  sessions         Session[]
+  skills           Skill[]
+  debateThreads    DebateThread[]
+}
+
+model Skill {
+  id                String      @id @default(uuid())
+  topicId           String
+  concepts          String      @default("[]")
+  examples          String      @default("[]")
+  analogies         String      @default("[]")
+  exercises         String      @default("[]")
+  reviewCards       String      @default("[]")
+  assessmentCriteria String     @default("")
+  createdAt         DateTime    @default(now())
+  topic             Topic       @relation(fields: [topicId], references: [id])
+  skillNodes        SkillNode[]
+}
+
+model SkillNode {
+  id        String @id @default(uuid())
+  skillId   String
+  type      String
+  title     String
+  content   String
+  difficulty Int   @default(1)
+  order     Int    @default(0)
+  skill     Skill  @relation(fields: [skillId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  sessionId String
+  role      String
+  agentRole String?
+  content   String
+  metadata  String?
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id])
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  sessionId   String
+  userId      String
+  skillNodeId String
+  question    String
+  answer      String
+  userAnswer  String
+  isCorrect   Boolean
+  feedback    String
+  mastery     String   @default("needs_review")
+  createdAt   DateTime @default(now())
+  session     Session  @relation(fields: [sessionId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model MemoryItem {
+  id        String   @id @default(uuid())
+  userId    String
+  topicId   String
+  content   String
+  type      String
+  mastery   String   @default("needs_review")
+  metadata  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  reviewPlans ReviewPlan[]
+}
+
+model ReviewPlan {
+  id            String    @id @default(uuid())
+  userId        String
+  memoryItemId  String
+  nextReviewAt  DateTime
+  interval      Float     @default(1)
+  easeFactor    Float     @default(2.5)
+  repetitions   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+  memoryItem    MemoryItem @relation(fields: [memoryItemId], references: [id])
+}
+
+model DebateThread {
+  id          String           @id @default(uuid())
+  sessionId   String
+  topicId     String
+  title       String
+  status      String           @default("active")
+  summary     String?
+  createdAt   DateTime         @default(now())
+  session     Session          @relation(fields: [sessionId], references: [id])
+  topic       Topic            @relation(fields: [topicId], references: [id])
+  positions   DebatePosition[]
+}
+
+model DebatePosition {
+  id        String @id @default(uuid())
+  threadId  String
+  role      String
+  stance    String
+  arguments String @default("[]")
+  evidence  String @default("[]")
+  order     Int    @default(0)
+  thread    DebateThread @relation(fields: [threadId], references: [id])
+}
+
+model MarketplacePackage {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  author       String
+  domain       String
+  difficulty   Int      @default(1)
+  tags         String   @default("[]")
+  prerequisites String  @default("[]")
+  objectives   String   @default("[]")
+  downloads    Int      @default(0)
+  rating       Float    @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model ApiConfig {
+  id          String   @id @default(uuid())
+  provider    String
+  apiKey      String
+  modelId     String
+  endpoint    String
+  maxTokens   Int      @default(4096)
+  temperature Float    @default(0.7)
+  extraParams String   @default("{}")
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PromptTemplate {
+  id           String   @id @default(uuid())
+  action       String
+  scene        String   @default("tutor")
+  systemPrompt String
+  description  String   @default("")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

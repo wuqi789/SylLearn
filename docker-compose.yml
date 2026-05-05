@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - JWT_SECRET=change-this-in-production
+      - NEXT_PUBLIC_APP_NAME=SylLearn
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - MODEL_PROVIDER=mock
+    volumes:
+      - app-data:/app/prisma
+    restart: unless-stopped
+
+volumes:
+  app-data:
