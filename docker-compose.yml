@@ -12,5 +12,6 @@ services:
     volumes:
       - app-data:/app/prisma
     restart: unless-stopped
+    
 volumes:
   app-data:
